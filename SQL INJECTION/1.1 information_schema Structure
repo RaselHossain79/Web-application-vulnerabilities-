@@ -1,0 +1,50 @@
+information_schema Structure (Quick Reference)
+
+Database → Tables → Columns
+
+In MySQL metadata:
+
+information_schema
+     │
+     ├── tables
+     │      ├── table_schema  → database name
+     │      └── table_name    → table name
+     │
+     └── columns
+            ├── table_name    → table name
+            └── column_name   → column name
+
+---
+
+Full Enumeration Flow
+
+database()
+      ↓
+information_schema.tables
+      ↓
+table_name
+      ↓
+information_schema.columns
+      ↓
+column_name
+      ↓
+SELECT column FROM table
+
+---
+
+Visual Flow
+
+ Database
+    ↓
+  Tables
+    ↓
+  Columns
+    ↓
+   Data
+
+Example attack path:
+
+database() → academy_labs
+table_name → users
+column_name → username,password
+data → SELECT username,password FROM users
